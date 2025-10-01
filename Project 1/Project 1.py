@@ -1,4 +1,8 @@
 """ AER850: Project 1 """
+# Name: Alexander Wojtkowski
+# Student #: 501168859
+
+# Due Date: October 6th, 2025
 
 """ Imports """
 
@@ -101,7 +105,8 @@ for name, model in models.items():
     
     reports[name] = classification_report(y_test, y_pred)
     
-# Using RandomizedSearchCV on the RandomForest model to determine alternative parameters
+# Using RandomizedSearchCV on the Random Forest model to determine alternative 
+# parameters
 randforest_random = RandomizedSearchCV(
     estimator=RandForest,
     param_distributions=params["Random Forest"],
@@ -166,14 +171,13 @@ stacked_model = StackingClassifier(
     )
 
 # Training and running the model
-
 stacked_model.fit(X_train_scaled, y_train)
 y_pred = stacked_model.predict(X_test_scaled)
 
 print("\n== Stacked Model (Random Forest + SVC) ==")
 print(classification_report(y_test, y_pred))
 
-# Making the confusion matrix
+# Making the confusion matrix and displaying it
 conf_model = stacked_model
 cm = confusion_matrix(y_test, y_pred)
 
@@ -198,14 +202,18 @@ test_points = pd.DataFrame([[9.375,3.0625,1.51],
                            columns = ["X","Y","Z"]
                            )
 
+# Creating Model Pipeline
 svc_pipeline = Pipeline([
     ("scaler", StandardScaler()),
     ("SVC", best_models["SVC"])
     ])
 svc_pipeline.fit(X_train, y_train)
 
+# Creating Joblib files
 joblib.dump(svc_pipeline, "best_model.joblib")
 loaded_model = joblib.load("best_model.joblib")
+
+# Predicting the values
 prediction = loaded_model.predict(test_points)
 
 print("\nPredictions for test points:", prediction)
