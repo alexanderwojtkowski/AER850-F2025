@@ -88,7 +88,7 @@ RandForest = RandomForestClassifier(class_weight="balanced", random_state=42)
 params = {
     "Logistic Regression": {"C": [0.01, 0.1, 1, 10], "penalty": ["l2"], "solver": ["lbfgs", "saga", "newton-cholesky"]},
     "SVC": {"C": [0.01, 0.1, 1, 10], "kernel": ["linear", "rbf", "poly"], "gamma": [0.01, 0.1, 1, 10]},
-    "Random Forest": {"max_depth": [None, 5, 10, 20, 30], "min_samples_split": [2, 5, 10], "min_samples_leaf": [1, 2, 4], "n_estimators": [50, 100, 200, 400]}
+    "Random Forest": {"max_depth": [None, 5, 10, 20], "min_samples_split": [2, 5, 10], "n_estimators": [50, 100, 200]}
 }
 
 # Running GridSearchCV on each model to obtain best parameters
