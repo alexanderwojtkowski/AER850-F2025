@@ -17,7 +17,7 @@ from tensorflow import keras
 np.random.seed(42)
 keras.utils.set_random_seed(42)
 
-MODEL_NAME = "/content/drive/MyDrive/Colab Notebooks/Project 2/Proj2_Mdl2.keras"
+MODEL_NAME = "/content/drive/MyDrive/Colab Notebooks/Project 2/Model_2.keras"
 
 IMG_HEIGHT = 500
 IMG_WIDTH = 500
@@ -25,6 +25,8 @@ IMG_WIDTH = 500
 EPOCHS = 30
 
 MODEL_SELECTION = '2' # 2 models are being trained, 1 for the first training, 2 for the other
+
+BATCH_SIZE = 32
 
 """ Part 1: Data Processing - 20 marks """
 # Define Image Shape (500,500,3)
@@ -44,19 +46,20 @@ data_augmentation = keras.Sequential([
     keras.layers.RandomZoom(0.1),
 ])
 
+
 # Create Train and Validation Generator Using Keras' imagedatasetfromdirectory
 # or PyTorch's Dataloader
 train_ds = keras.utils.image_dataset_from_directory(
     training_dir,
     image_size=(IMG_HEIGHT, IMG_WIDTH),
-    batch_size=32,
+    batch_size=BATCH_SIZE, # Use the new BATCH_SIZE variable
     shuffle=True
 )
 
 valid_ds = keras.utils.image_dataset_from_directory(
     validation_dir,
     image_size=(IMG_HEIGHT, IMG_WIDTH),
-    batch_size=32,
+    batch_size=BATCH_SIZE,
     shuffle=False
 )
 
@@ -68,8 +71,10 @@ AUTOTUNE = tf.data.AUTOTUNE
 # Optimize data pipeline performance
 train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
 valid_ds = valid_ds.cache().prefetch(buffer_size=AUTOTUNE)
-    
+
 """ Part 2: Neural Network Architecture Design - 30 marks """
+"""                        &                              """
+"""       Part 3: Hyperparameter Analysis - 20 marks      """
 
 if MODEL_SELECTION == '1':
     print("Training Model 1")
@@ -101,21 +106,19 @@ elif MODEL_SELECTION == '2':
     model = keras.Sequential([
         keras.layers.Input(shape=IMG_Shape),
 
-        keras.layers.Conv2D(64, (3,3), activation='relu', padding='same'),
+        keras.layers.Conv2D(32, (5,5), padding='same'),
+        keras.layers.LeakyReLU(negative_slope=0.1),
         keras.layers.BatchNormalization(),
-        keras.layers.Conv2D(64, (3,3), activation='relu', padding='same'),
         keras.layers.MaxPooling2D(pool_size=(2,2)),
-        keras.layers.Dropout(0.25),
 
-        keras.layers.Conv2D(128, (3,3), activation='relu', padding='same'),
+        keras.layers.Conv2D(64, (5,5), padding='same'),
+        keras.layers.LeakyReLU(negative_slope=0.1),
         keras.layers.BatchNormalization(),
-        keras.layers.Conv2D(128, (3,3), activation='relu', padding='same'),
         keras.layers.MaxPooling2D(pool_size=(2,2)),
-        keras.layers.Dropout(0.25),
 
         keras.layers.Flatten(),
-        keras.layers.Dense(256, activation='relu'),
-        keras.layers.Dropout(0.4),
+        keras.layers.Dense(64, activation='relu'),
+        keras.layers.Dropout(0.35),
         keras.layers.Dense(3, activation='softmax')
     ])
 
@@ -124,15 +127,17 @@ else:
 
 model.summary()
 
+optimizer = keras.optimizers.Adam(learning_rate=1e-4)
+
 model.compile(
-    optimizer='adam',
+    optimizer=optimizer,
     loss='sparse_categorical_crossentropy',
     metrics=['accuracy']
 )
 
 early_stop = keras.callbacks.EarlyStopping(
     monitor='val_accuracy',
-    patience=4,
+    patience=7,
     restore_best_weights=True
 )
 
@@ -148,19 +153,6 @@ model.save(MODEL_NAME)
 
 loss, acc = model.evaluate(valid_ds)
 print(f"Validation Accuracy: {acc:.2f}")
-
-""" Part 3: Hyperparameter Analysis - 20 marks """
-# Common Functions within Convolution layers are relu and LeakyRelu
-
-# Common Functions within Fully connected dense layers are usually relu or elu
-# For final layer for multi-class classification is softmax
-
-# Number of neurons or filters for the dense and convolutional layers respectively
-# Filters should be base 2, neurons should be varied based on performance
-
-# Last Parameters should be loss function and optimizers usually within
-# Keras' compile function
-# Loss Function and Optimizer to start would be catergorical crossentropy and adma, respectively
 
 """ Part 4: Model Evaluation - 10 marks """
 # Plot Training and Validation Performance
