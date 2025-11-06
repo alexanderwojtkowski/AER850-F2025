@@ -24,9 +24,9 @@ IMG_WIDTH = 500
 
 EPOCHS = 30
 
-MODEL_SELECTION = '2' # 2 models are being trained, 1 for the first training, 2 for the other
-
 BATCH_SIZE = 32
+
+MODEL_SELECTION = '2' # 1 for the first model, 2 for the other
 
 """ Part 1: Data Processing - 20 marks """
 # Define Image Shape (500,500,3)
@@ -44,9 +44,7 @@ data_augmentation = keras.Sequential([
     keras.layers.RandomFlip("horizontal"),
     keras.layers.RandomRotation(0.1),
     keras.layers.RandomZoom(0.1)
-    ,
 ])
-
 
 # Create Train and Validation Generator Using Keras' imagedatasetfromdirectory
 # or PyTorch's Dataloader

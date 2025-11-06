@@ -23,14 +23,6 @@ IMG_HEIGHT = 500
 IMG_WIDTH = 500
 
 """ Part 5: Model Testing - 20 marks """
-# Data processing of the test images to the format of the input data
-# Use image package from keras preprocessing to load, convert to an array
-# and normalize by dividing by 255
-
-# Since its multi-class, final model layer uses softmax, need to find the
-# maximum probability from the model prediction
-
-# Final prediction should look like one provided in assignment
 
 model = keras.models.load_model(MODEL_NAME)
 
@@ -40,12 +32,8 @@ IMG_Shape = (IMG_HEIGHT,IMG_WIDTH,3) # Height Width Channels
 # Establish Test Data Directories
 testing_dir = "Data/test"
 
-# Perform Data Augmentation (Re-scaling, shear range, zoom range)
-# Use Keras' Image Preprocessing Pipeline or Torchvision Transforms
 normalization_layer = keras.layers.Rescaling(1/255)
 
-# Create Train and Validation Generator Using Keras' imagedatasetfromdirectory
-# or PyTorch's Dataloader
 test_ds = keras.utils.image_dataset_from_directory(
     testing_dir,
     image_size=(IMG_HEIGHT, IMG_WIDTH),
