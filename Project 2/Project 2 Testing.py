@@ -4,177 +4,99 @@
 
 # Due Date: November 5th, 2025
 
-""" IMPORTS """
-
-import numpy as np
-import matplotlib.pyplot as plt
+""" Imports """
 
 import tensorflow as tf
 from tensorflow import keras
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.utils import load_img, img_to_array
 
 """ VARIABLES """
 
 np.random.seed(42)
 keras.utils.set_random_seed(42)
 
-MODEL_NAME = "/content/drive/MyDrive/Colab Notebooks/Project 2/Model_2.keras"
+MODEL_NAME = "Final_Model_2.keras"
 
 IMG_HEIGHT = 500
 IMG_WIDTH = 500
 
-EPOCHS = 30
+""" Part 5: Model Testing - 20 marks """
+# Data processing of the test images to the format of the input data
+# Use image package from keras preprocessing to load, convert to an array
+# and normalize by dividing by 255
 
-MODEL_SELECTION = '2' # 2 models are being trained, 1 for the first training, 2 for the other
+# Since its multi-class, final model layer uses softmax, need to find the
+# maximum probability from the model prediction
 
-BATCH_SIZE = 32
+# Final prediction should look like one provided in assignment
 
-""" Part 1: Data Processing - 20 marks """
+model = keras.models.load_model(MODEL_NAME)
+
 # Define Image Shape (500,500,3)
 IMG_Shape = (IMG_HEIGHT,IMG_WIDTH,3) # Height Width Channels
 
-# Establish Train and Validation Data Directories
-training_dir = "/content/drive/MyDrive/Colab Notebooks/Project 2/Data/train"
-validation_dir = "/content/drive/MyDrive/Colab Notebooks/Project 2/Data/valid"
+# Establish Test Data Directories
+testing_dir = "Data/test"
 
 # Perform Data Augmentation (Re-scaling, shear range, zoom range)
 # Use Keras' Image Preprocessing Pipeline or Torchvision Transforms
 normalization_layer = keras.layers.Rescaling(1/255)
 
-data_augmentation = keras.Sequential([
-    keras.layers.RandomFlip("horizontal"),
-    keras.layers.RandomRotation(0.1),
-    keras.layers.RandomZoom(0.1),
-])
-
-
 # Create Train and Validation Generator Using Keras' imagedatasetfromdirectory
 # or PyTorch's Dataloader
-train_ds = keras.utils.image_dataset_from_directory(
-    training_dir,
+test_ds = keras.utils.image_dataset_from_directory(
+    testing_dir,
     image_size=(IMG_HEIGHT, IMG_WIDTH),
-    batch_size=BATCH_SIZE, # Use the new BATCH_SIZE variable
+    batch_size=32,
     shuffle=True
 )
 
-valid_ds = keras.utils.image_dataset_from_directory(
-    validation_dir,
-    image_size=(IMG_HEIGHT, IMG_WIDTH),
-    batch_size=BATCH_SIZE,
-    shuffle=False
-)
+class_names = test_ds.class_names
+print("Class names:", class_names)
 
-train_ds = train_ds.map(lambda x, y: (data_augmentation(normalization_layer(x)), y))
-valid_ds = valid_ds.map(lambda x, y: (normalization_layer(x), y))
+test_ds = test_ds.map(lambda x, y: (normalization_layer(x), y))
 
-AUTOTUNE = tf.data.AUTOTUNE
+loss, acc = model.evaluate(test_ds)
+print(f"Test Accuracy: {acc:.2f}")
 
-# Optimize data pipeline performance
-train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
-valid_ds = valid_ds.cache().prefetch(buffer_size=AUTOTUNE)
+# Paths to specific test images
+specific_images = {
+    "crack": "Data/test/crack/test_crack.jpg",
+    "missing-head": "Data/test/missing-head/test_missinghead.jpg",
+    "paint-off": "Data/test/paint-off/test_paintoff.jpg"
+}
 
-""" Part 2: Neural Network Architecture Design - 30 marks """
-"""                        &                              """
-"""       Part 3: Hyperparameter Analysis - 20 marks      """
+plt.figure(figsize=(10, 10))
 
-if MODEL_SELECTION == '1':
-    print("Training Model 1")
+for class_name, img_path in specific_images.items():
+    # Load and preprocess image
+    img = load_img(img_path, target_size=(IMG_HEIGHT, IMG_WIDTH))
+    img_array = img_to_array(img)
+    img_array = np.expand_dims(img_array, axis=0)  # shape (1, 500, 500, 3)
+    img_array = img_array / 255.0  # normalize
 
-    model = keras.Sequential([
-        keras.layers.Input(shape=IMG_Shape),
+    # Predict
+    predictions = model.predict(img_array)
+    pred_probs = tf.nn.softmax(predictions[0]).numpy()
+    predicted_idx = np.argmax(pred_probs)
+    predicted_label = class_names[predicted_idx]
 
-        keras.layers.Conv2D(32, (3,3), activation='relu', padding='same'),
-        keras.layers.BatchNormalization(),
-        keras.layers.MaxPooling2D(pool_size=(2,2)),
+    # Plot image
+    plt.figure(figsize=(5, 5))
+    plt.imshow(img)
+    plt.axis("off")
 
-        keras.layers.Conv2D(64, (3,3), activation='relu', padding='same'),
-        keras.layers.BatchNormalization(),
-        keras.layers.MaxPooling2D(pool_size=(2,2)),
+    plt.title(f"True Crack Classification Label: {class_name}\n"
+              f"Predicted Crack Classification Label: {predicted_label}",
+              fontsize=10, pad=20)
 
-        keras.layers.Conv2D(128, (3,3), activation='relu', padding='same'),
-        keras.layers.BatchNormalization(),
-        keras.layers.MaxPooling2D(pool_size=(2,2)),
+    # Display probabilities for all classes
+    text_y = 460
+    for i, cls in enumerate(class_names):
+        plt.text(10, text_y - (i * 20),
+                 f"{cls.capitalize()}: {pred_probs[i]*100:.1f}%",
+                 color='lime', fontsize=10, weight='bold')
 
-        keras.layers.Flatten(),
-        keras.layers.Dense(128, activation='relu'),
-        keras.layers.Dropout(0.3),
-        keras.layers.Dense(3, activation='softmax')
-    ])
-
-elif MODEL_SELECTION == '2':
-    print("Training Model 2")
-
-    model = keras.Sequential([
-        keras.layers.Input(shape=IMG_Shape),
-
-        keras.layers.Conv2D(32, (5,5), padding='same'),
-        keras.layers.LeakyReLU(negative_slope=0.1),
-        keras.layers.BatchNormalization(),
-        keras.layers.MaxPooling2D(pool_size=(2,2)),
-
-        keras.layers.Conv2D(64, (5,5), padding='same'),
-        keras.layers.LeakyReLU(negative_slope=0.1),
-        keras.layers.BatchNormalization(),
-        keras.layers.MaxPooling2D(pool_size=(2,2)),
-
-        keras.layers.Flatten(),
-        keras.layers.Dense(64, activation='relu'),
-        keras.layers.Dropout(0.35),
-        keras.layers.Dense(3, activation='softmax')
-    ])
-
-else:
-    raise ValueError("Invalid MODEL_SELECTION value. Choose '1' or '2'.")
-
-model.summary()
-
-optimizer = keras.optimizers.Adam(learning_rate=1e-4)
-
-model.compile(
-    optimizer=optimizer,
-    loss='sparse_categorical_crossentropy',
-    metrics=['accuracy']
-)
-
-early_stop = keras.callbacks.EarlyStopping(
-    monitor='val_accuracy',
-    patience=7,
-    restore_best_weights=True
-)
-
-history = model.fit(
-    train_ds,
-    validation_data=valid_ds,
-    epochs=EPOCHS,
-    callbacks = [early_stop],
-    verbose=1
-)
-
-model.save(MODEL_NAME)
-
-loss, acc = model.evaluate(valid_ds)
-print(f"Validation Accuracy: {acc:.2f}")
-
-""" Part 4: Model Evaluation - 10 marks """
-# Plot Training and Validation Performance
-plt.figure(figsize=(12, 5))
-
-# Accuracy Plot
-plt.subplot(1, 2, 1)
-plt.plot(history.history['accuracy'], label='Training Accuracy')
-plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
-plt.title('Model Accuracy')
-plt.xlabel('Epoch')
-plt.ylabel('Accuracy')
-plt.legend()
-
-# Loss Plot
-plt.subplot(1, 2, 2)
-plt.plot(history.history['loss'], label='Training Loss')
-plt.plot(history.history['val_loss'], label='Validation Loss')
-plt.title('Model Loss')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.legend()
-
-plt.tight_layout()
-plt.show()
+    plt.show()

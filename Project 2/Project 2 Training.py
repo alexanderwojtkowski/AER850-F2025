@@ -17,7 +17,7 @@ from tensorflow import keras
 np.random.seed(42)
 keras.utils.set_random_seed(42)
 
-MODEL_NAME = "/content/drive/MyDrive/Colab Notebooks/Project 2/Model_2.keras"
+MODEL_NAME = "Model_5.keras"
 
 IMG_HEIGHT = 500
 IMG_WIDTH = 500
@@ -33,8 +33,8 @@ BATCH_SIZE = 32
 IMG_Shape = (IMG_HEIGHT,IMG_WIDTH,3) # Height Width Channels
 
 # Establish Train and Validation Data Directories
-training_dir = "/content/drive/MyDrive/Colab Notebooks/Project 2/Data/train"
-validation_dir = "/content/drive/MyDrive/Colab Notebooks/Project 2/Data/valid"
+training_dir = "Data/train"
+validation_dir = "Data/valid"
 
 # Perform Data Augmentation (Re-scaling, shear range, zoom range)
 # Use Keras' Image Preprocessing Pipeline or Torchvision Transforms
@@ -43,7 +43,8 @@ normalization_layer = keras.layers.Rescaling(1/255)
 data_augmentation = keras.Sequential([
     keras.layers.RandomFlip("horizontal"),
     keras.layers.RandomRotation(0.1),
-    keras.layers.RandomZoom(0.1),
+    keras.layers.RandomZoom(0.1)
+    ,
 ])
 
 
